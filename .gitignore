@@ -1,0 +1,5 @@
+plots/
+outputs/
+*.png
+*.csv
+__pycache__/
