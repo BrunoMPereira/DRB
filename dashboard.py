@@ -44,7 +44,10 @@ var_labels = {
     "AC_SHARE": "Sessions in AC (%)",
     "AVG_DAYS_BETWEEN_SESSIONS": "Average Days between Sessions",
     "CHARGED_AMOUNT": "Total Value",
-    "DAYS_FROM_LAST_SESSION": "Days from Last Session"
+    "DAYS_FROM_LAST_SESSION": "Days from Last Session",
+    "churn_risk": "Churn Risk",
+    "DIF_CHARGING_STATIONS": "Different Charging Stations Used",
+    "AVG_DIF_CHARGING_STATIONS": "Average Distinct Charging Stations"
 }
 
 # Reverse mapping (friendly -> original column)
@@ -61,7 +64,8 @@ eda_var_friendly = st.sidebar.selectbox(
                                      "AVG_SESSION_MINUTES",
                                      "AC_SHARE",
                                      "AVG_DAYS_BETWEEN_SESSIONS",
-                                     "CHARGED_AMOUNT"]]
+                                     "CHARGED_AMOUNT",
+                                     "DIF_CHARGING_STATIONS"]]
 )
 eda_var = inv_labels[eda_var_friendly]
 
@@ -162,7 +166,8 @@ default_feats = [
     "DAYS_FROM_LAST_SESSION",
     "CHARGED_AMOUNT",
     "AC_SHARE",
-    "AVG_SESSION_MINUTES"
+    "AVG_SESSION_MINUTES",
+    "DIF_CHARGING_STATIONS"
 ]
 
 available_features = [c for c in default_feats if c in df.columns]
@@ -199,9 +204,12 @@ if st.button("▶️ Run Clustering"):
 
         # Cluster summary
         st.subheader("📈 Cluster Summary")
+        total_tokens = len(df)
         cluster_summary = (
             df.groupby("cluster")
               .agg({
+                  "TOKEN_ID": "count",
+                  "DIF_CHARGING_STATIONS": "mean",
                   "REVENUE_PER_SESSION": "mean",
                   "AVG_SESSION_MINUTES": "mean",
                   "CHARGED_AMOUNT": "mean",
@@ -210,6 +218,21 @@ if st.button("▶️ Run Clustering"):
               })
               .reset_index()
         )
+
+        cluster_summary = cluster_summary.rename(columns={"TOKEN_ID": "N_TOKENS",
+                                                          "DIF_CHARGING_STATIONS": "AVG_DIF_CHARGING_STATIONS"})
+        cluster_summary["PCT_TOKENS"] = (cluster_summary["N_TOKENS"] / total_tokens * 100).round(2)
+
+        # Create combined column
+        cluster_summary["TOKENS_INFO"] = cluster_summary.apply(
+            lambda row: f"{row['N_TOKENS']} ({row['PCT_TOKENS']}%)", axis=1
+        )
+
+        cols = ["cluster", "TOKENS_INFO", "AVG_DIF_CHARGING_STATIONS",
+        "REVENUE_PER_SESSION", "AVG_SESSION_MINUTES",
+        "CHARGED_AMOUNT", "AC_SHARE", "churn_risk"]
+        cluster_summary = cluster_summary[cols]
+        cluster_summary = cluster_summary.rename(columns={"TOKENS_INFO": "Number of Tokens"})
 
         # Rename columns in summary
         cluster_summary = cluster_summary.rename(columns=var_labels)
