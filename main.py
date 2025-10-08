@@ -211,6 +211,7 @@ if __name__ == "__main__":
             "TOKEN_ID": pl.Utf8,
             "CHARGED_AMOUNT": pl.Float64,
             "DISCOUNTED_AMOUNT": pl.Float64,
+            "DIF_CHARGING_STATIONS": pl.Float64,
         },
     )
     data_acdc = pl.read_csv(
@@ -274,7 +275,8 @@ if __name__ == "__main__":
         "DAYS_FROM_LAST_SESSION",
         "CHARGED_AMOUNT",
         "AC_SHARE",
-        "AVG_SESSION_MINUTES"
+        "AVG_SESSION_MINUTES",
+        "DIF_CHARGING_STATIONS"
     ]
 
     # -------------------------
