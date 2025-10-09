@@ -36,29 +36,33 @@ def get_ai_recommendations(insights_text, client):
     Os dados que te passamos de seguida são de clusters de carregamentos de veículos elétricos. Estes clusters já foram previamente agrupados através de um algoritmo de k-means e com dados da nossa plataforma. A primeira coluna identifica o id do cluster e a última coluna identifica o risco de churn dos tokens dentro desse cluster. As colunas entre a primeira e a última são propriedades / métricas de cada cluster.
     O formato dos dados é semelhante a um csv, com a separação das colunas por vírgula “,”, sendo que a primeira linha é o nome das colunas e as seguintes são os dados.
     Exemplo de colunas que podem estar presentes nos dados e seu significado:
+    cluster - id do cluster
     Number of Tokens - número de cartões do cluster
     Average Distinct Charging Stations - número médio de postos de carregamento distintos
     Average Session Value - custo médio, em euros, das sessões de carregamento desse cluster
-    Average Session Duration - duração média, em minutos, das sessões de carregamento desse cluster
+    Average Session Duration (min) - duração média, em minutos, das sessões de carregamento desse cluster
     Total Value - custo total, em euros, das sessões de carregamento desse cluster
     Sessions in AC (%) - percentagem de sessões de carregamento desse cluster cujo carregamento foi realizado em corrente alternada (AC)
+    Churn Risk - percentagem de tokens nesse cluster que estão em risco de churn (0 a 1)
     
     Seguem os dados dos clusters:
     {insights_text}
-    """
 
+    Instruções de saída:
+        * Gera até 10 recomendações curtas e acionáveis (podes dar menos).
+        * Cada recomendação deve ter no máximo 20 palavras.
+        * Ordena por relevância decrescente (impacto no churn e engagement).
+        * Coloca no início de cada linha um número entre 0–10 indicando importância, 0 = pouca importância, 10 = extremamente importante.
+        * Formata em lista com bullet points.
+        * Coloca a negrito o nome dos clusters.
+        * A linguagem deve ser inglês americano.
+    """
+    
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": """A tua especialidade é analisar os dados e sugerir recomendações.
-                                            Instruções de saída:
-                                             * Gera até 10 recomendações curtas e acionáveis (podes dar menos).
-                                             * Cada recomendação deve ter no máximo 20 palavras.
-                                             * Ordena por relevância decrescente (impacto no churn e engagement).
-                                             * Coloca no início de cada linha um número entre 0–10 indicando importância, 0 = pouca importância, 10 = extremamente importante.
-                                             * Formata em lista com bullet points.
-                                             * A linguagem deve ser inglês americano"""},
+                {"role": "system", "content": """A tua especialidade é analisar os dados e sugerir recomendações com base nas informações dos clusters."""},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -191,14 +195,14 @@ fig_hist, ax = plt.subplots(figsize=(5, 4))
 sns.histplot(df[eda_var], bins=30, kde=True, color="skyblue", ax=ax)
 ax.set_title(f"Histogram of {eda_var_friendly}")
 ax.set_xlabel(eda_var_friendly)
-st.pyplot(fig_hist,use_container_width=False)
+st.pyplot(fig_hist,width='content')
 
 # Boxplot
 fig_box, ax = plt.subplots(figsize=(5, 3))
 sns.boxplot(y=df[eda_var], color="lightgreen", ax=ax)
 ax.set_title(f"Boxplot of {eda_var_friendly}")
 ax.set_ylabel(eda_var_friendly)
-st.pyplot(fig_box,use_container_width=False)
+st.pyplot(fig_box,width='content')
 
 # Boxplot by churn risk
 st.markdown("### Compare by Churn Risk")
@@ -207,7 +211,7 @@ sns.boxplot(x=df["churn_risk"], y=df[eda_var], palette="Set2", ax=ax)
 ax.set_title(f"{eda_var_friendly} by Churn Risk")
 ax.set_xlabel("Churn Risk (0 = Not at risk, 1 = At risk)")
 ax.set_ylabel(eda_var_friendly)
-st.pyplot(fig_box_group,use_container_width=False)
+st.pyplot(fig_box_group,width='content')
 
 st.markdown("---")
 
@@ -268,7 +272,7 @@ if len(selected_features) >= 2:
         ax.set_ylabel("Inertia")
         ax.set_title("Elbow Method for Optimal k")
         ax.legend()
-        st.pyplot(fig_elbow)
+        st.pyplot(fig_elbow,width='content')
 
     st.caption(f"💡 Based on the elbow method, a good starting choice for k is **{best_k}**.")
 
@@ -378,14 +382,15 @@ if st.session_state.clustered_df is not None:
         ax.set_ylabel(f2_friendly)
         ax.set_title(f"K-Means Clusters ({f1_friendly} vs {f2_friendly})")
         plt.colorbar(scatter, ax=ax, label="Cluster")
-        st.pyplot(fig_scatter)
+        st.pyplot(fig_scatter,width='content')
 
     st.markdown("---")
     st.subheader("🤖 AI-Powered Recommendations")
 
     if client:
+        csv_text = cluster_summary.to_csv(index=False, sep=",")
         insights_text = f"""
-        {cluster_summary.to_string(index=False)}"""
+        {csv_text}"""
 
 
         if st.button("Generate Recommendations"):
