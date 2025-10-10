@@ -49,10 +49,9 @@ def get_ai_recommendations(insights_text, client):
     {insights_text}
 
     Instruções de saída:
-        * Gera até 10 recomendações curtas e acionáveis (podes dar menos).
+        * Gera uma recomendação para cada cluster, curta e acionável.
         * Cada recomendação deve ter no máximo 20 palavras.
-        * Ordena por relevância decrescente (impacto no churn e engagement).
-        * Coloca no início de cada linha um número entre 0–10 indicando importância, 0 = pouca importância, 10 = extremamente importante.
+        * Ordena pelo número do cluster.
         * Formata em lista com bullet points.
         * Coloca a negrito o nome dos clusters.
         * A linguagem deve ser inglês americano.
